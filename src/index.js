@@ -15,7 +15,7 @@ const configName = 'triage.yml'
 async function triageLabel (context) {
   const config = await context.config(configName)
   const { label } = config
-  return label || 'triage'
+  return label || 'status:triage'
 }
 
 
