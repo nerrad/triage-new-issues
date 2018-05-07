@@ -76,7 +76,7 @@ async function assignForTriage (context) {
   const label = await triageLabel(context)
   const assignee = await triageAssignee(context)
   if (assignee !== '' && payload.label && payload.label.name === label) {
-    await github.issues.addAssignessToIssue(context.issue({assignees: [assignee]}))
+    await github.issues.addAssigneesToIssue(context.issue({assignees: [assignee]}))
   }
 }
 
