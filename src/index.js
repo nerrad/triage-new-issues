@@ -18,6 +18,13 @@ async function triageLabel (context) {
   return label || 'triage'
 }
 
+
+async function triageAssignee (context) {
+  const config = await context.config(configName)
+  const { assignee } = config
+  return assignee || ''
+}
+
 /**
  * Returns whether the triage labeling is enabled or not.
  *
@@ -59,6 +66,33 @@ async function triage (context) {
 }
 
 /**
+ * Assigns the assignee to an issue if the triage label is applied to the issue
+ */
+async function assignForTriage (context) {
+  const { payload, github } = context
+  if (!(await enabled(context))) {
+    return
+  }
+  const label = await triageLabel(context)
+  const assignee = await triageAssignee(context)
+  if (assignee !== '' && payload.label && payload.label.name === label) {
+    await github.issues.addAssignessToIssue(context.issue({assignees: [assignee]}))
+  }
+}
+
+async function removeAssigneeFromTriage (context) {
+  const { payload, github } = context
+  if (!(await enabled(context))) {
+    return
+  }
+  const label = await triageLabel(context)
+  const assignee = await triageAssignee(context)
+  if (assignee !== '' && payload.label && payload.label.name === label) {
+    await github.issues.removeAssigneesFromIssue(context.issue({assignees:[assignee]}))
+  }
+}
+
+/**
  * If the another label is attached then remove the `triage` label.
  *
  * @param   {Object} `context` Probot webhook event context
@@ -84,6 +118,8 @@ async function check (context) {
 module.exports = (robot) => {
   robot.on('issues.opened', triage)
   robot.on('issues.labeled', check)
+  robot.on('issues.labeled', assignForTriage)
+  robot.on('issues.unlabeled', removeAssigneeFromTriage)
   robot.on('issues.reopened', triage)
 
   robot.on('pull_request.opened', triage)
